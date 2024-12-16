@@ -1,9 +1,102 @@
-<!DOCTYPES>
-<html>
-	<head>
-		<title>Index</title>
-	</head>
-	<body>
-		<h1>Keinan Weissberg</h1>
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casino</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .menu, .game {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu" class="menu visible">
+    <h1>Casino Menu</h1>
+    <p>Wallet: <span id="wallet">100</span> Credits</p>
+    <button onclick="startGame('slots')">Play Slots</button>
+    <button onclick="startGame('roulette')">Play Roulette</button>
+    <button onclick="startGame('dice')">Play Dice</button>
+  </div>
+
+  <div id="game" class="game">
+    <h1 id="game-title"></h1>
+    <p>Wallet: <span id="wallet-game">100</span> Credits</p>
+    <input type="number" id="bet" placeholder="Enter your bet" min="1">
+    <button onclick="play()">Place Bet</button>
+    <p id="result"></p>
+    <button onclick="goBack()">Back to Menu</button>
+  </div>
+
+  <script>
+    let wallet = 100;
+
+    function startGame(game) {
+      document.getElementById('menu').classList.remove('visible');
+      document.getElementById('game').classList.add('visible');
+      document.getElementById('game-title').textContent = `Playing ${game.charAt(0).toUpperCase() + game.slice(1)}`;
+      document.getElementById('wallet-game').textContent = wallet;
+      currentGame = game;
+    }
+
+    function play() {
+      const bet = parseInt(document.getElementById('bet').value);
+      if (isNaN(bet) || bet < 1 || bet > wallet) {
+        document.getElementById('result').textContent = "Invalid bet!";
+        return;
+      }
+
+      let outcome;
+      switch (currentGame) {
+        case 'slots':
+          outcome = Math.random() < 0.5 ? bet : -bet;
+          break;
+        case 'roulette':
+          outcome = Math.random() < 0.4 ? bet * 2 : -bet;
+          break;
+        case 'dice':
+          outcome = Math.floor(Math.random() * 6) + 1 === 6 ? bet * 5 : -bet;
+          break;
+      }
+
+      wallet += outcome;
+      document.getElementById('wallet-game').textContent = wallet;
+      document.getElementById('wallet').textContent = wallet;
+      document.getElementById('result').textContent =
+        outcome > 0 ? `You won ${outcome} credits!` : `You lost ${-outcome} credits!`;
+
+      if (wallet <= 0) {
+        alert("Game Over! You're out of credits.");
+        resetGame();
+      }
+    }
+
+    function goBack() {
+      document.getElementById('menu').classList.add('visible');
+      document.getElementById('game').classList.remove('visible');
+      document.getElementById('result').textContent = '';
+      document.getElementById('bet').value = '';
+    }
+
+    function resetGame() {
+      wallet = 100;
+      document.getElementById('wallet').textContent = wallet;
+      document.getElementById('wallet-game').textContent = wallet;
+      goBack();
+    }
+  </script>
+</body>
 </html>
