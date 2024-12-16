@@ -21,6 +21,10 @@
       margin: 10px;
       font-size: 16px;
     }
+    .dice, .slot-machine, .roulette-wheel {
+      font-size: 40px;
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
@@ -36,13 +40,16 @@
     <h1 id="game-title"></h1>
     <p>Wallet: <span id="wallet-game">100</span> Credits</p>
     <input type="number" id="bet" placeholder="Enter your bet" min="1">
+    <div id="game-input"></div>
     <button onclick="play()">Place Bet</button>
     <p id="result"></p>
+    <div id="game-animation"></div>
     <button onclick="goBack()">Back to Menu</button>
   </div>
 
   <script>
     let wallet = 100;
+    let currentGame = '';
 
     function startGame(game) {
       document.getElementById('menu').classList.remove('visible');
@@ -50,6 +57,26 @@
       document.getElementById('game-title').textContent = `Playing ${game.charAt(0).toUpperCase() + game.slice(1)}`;
       document.getElementById('wallet-game').textContent = wallet;
       currentGame = game;
+      setupGameInput(game);
+    }
+
+    function setupGameInput(game) {
+      const inputDiv = document.getElementById('game-input');
+      inputDiv.innerHTML = '';
+      if (game === 'roulette') {
+        inputDiv.innerHTML = `
+          <p>Bet on:</p>
+          <button onclick="setBetChoice('red')">Red</button>
+          <button onclick="setBetChoice('black')">Black</button>
+          <p id="chosen-bet"></p>
+        `;
+      }
+    }
+
+    let betChoice = '';
+    function setBetChoice(choice) {
+      betChoice = choice;
+      document.getElementById('chosen-bet').textContent = `You chose: ${choice}`;
     }
 
     function play() {
@@ -60,15 +87,22 @@
       }
 
       let outcome;
+      const animationDiv = document.getElementById('game-animation');
+      animationDiv.innerHTML = '';
+
       switch (currentGame) {
         case 'slots':
-          outcome = Math.random() < 0.5 ? bet : -bet;
+          outcome = playSlots(bet);
           break;
         case 'roulette':
-          outcome = Math.random() < 0.4 ? bet * 2 : -bet;
+          if (!betChoice) {
+            document.getElementById('result').textContent = "Choose red or black first!";
+            return;
+          }
+          outcome = playRoulette(bet);
           break;
         case 'dice':
-          outcome = Math.floor(Math.random() * 6) + 1 === 6 ? bet * 5 : -bet;
+          outcome = playDice(bet);
           break;
       }
 
@@ -84,11 +118,36 @@
       }
     }
 
+    function playSlots(bet) {
+      const animationDiv = document.getElementById('game-animation');
+      const symbols = ['🍒', '🍋', '⭐', '💎', '7️⃣'];
+      const result = [symbols[Math.floor(Math.random() * symbols.length)],
+                      symbols[Math.floor(Math.random() * symbols.length)],
+                      symbols[Math.floor(Math.random() * symbols.length)]];
+      animationDiv.innerHTML = `<p class="slot-machine">${result.join(' | ')}</p>`;
+      return result[0] === result[1] && result[1] === result[2] ? bet * 5 : -bet;
+    }
+
+    function playRoulette(bet) {
+      const animationDiv = document.getElementById('game-animation');
+      const rouletteResult = Math.random() < 0.5 ? 'red' : 'black';
+      animationDiv.innerHTML = `<p class="roulette-wheel">The wheel landed on: ${rouletteResult.toUpperCase()}</p>`;
+      return rouletteResult === betChoice ? bet * 2 : -bet;
+    }
+
+    function playDice(bet) {
+      const animationDiv = document.getElementById('game-animation');
+      const diceRoll = Math.floor(Math.random() * 6) + 1;
+      animationDiv.innerHTML = `<p class="dice">🎲 You rolled a ${diceRoll}</p>`;
+      return diceRoll === 6 ? bet * 5 : -bet;
+    }
+
     function goBack() {
       document.getElementById('menu').classList.add('visible');
       document.getElementById('game').classList.remove('visible');
       document.getElementById('result').textContent = '';
       document.getElementById('bet').value = '';
+      betChoice = '';
     }
 
     function resetGame() {
