@@ -27,6 +27,34 @@
       display: inline-block;
       text-align: center;
     }
+    .wheel {
+      width: 200px;
+      height: 200px;
+      border: 10px solid #000;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+    .wheel-number {
+      position: absolute;
+      font-size: 20px;
+      font-weight: bold;
+      transform-origin: center center;
+    }
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-bottom: 20px solid #f00;
+      margin: 0 auto;
+      position: relative;
+      top: -30px;
+    }
   </style>
 </head>
 <body>
@@ -53,6 +81,7 @@
     let wallet = 100;
     let currentGame = '';
     let animationInterval;
+    let betChoice = '';
 
     function startGame(game) {
       document.getElementById('menu').classList.remove('visible');
@@ -85,7 +114,6 @@
       clearInterval(animationInterval);
     }
 
-    let betChoice = '';
     function setBetChoice(choice) {
       betChoice = choice;
       document.getElementById('chosen-bet').textContent = `You chose: ${choice}`;
@@ -109,7 +137,7 @@
           break;
         case 'roulette':
           if (!betChoice) {
-            document.getElementById('result').textContent = "Choose red or black first!";
+            document.getElementById('result').textContent = "Please select a color first!";
             return;
           }
           outcome = playRoulette(bet, animationDiv);
@@ -135,41 +163,50 @@
     }
 
     function playSlots(bet, animationDiv) {
-      const symbols = ['🍒', '🍋', '⭐', '💎', '7️⃣'];
-      let result = [];
+      const wheelNumbers = [-5, -10, 0, 5, 10, 15, 20];
+      let rotation = 0;
+      let chosenIndex;
+
+      animationDiv.innerHTML = `
+        <div class="pointer"></div>
+        <div class="wheel">
+          ${wheelNumbers.map((num, i) => `
+            <div class="wheel-number" style="transform: rotate(${i * 360 / wheelNumbers.length}deg) translate(80px) rotate(-${i * 360 / wheelNumbers.length}deg);">
+              ${num}
+            </div>`).join('')}
+        </div>
+      `;
 
       animationInterval = setInterval(() => {
-        result = [
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-        ];
-        animationDiv.innerHTML = `<p>${result.join(' | ')}</p>`;
+        rotation += Math.random() * 30 + 10;
+        animationDiv.querySelector('.wheel').style.transform = `rotate(${rotation}deg)`;
       }, 100);
 
       setTimeout(() => {
         clearInterval(animationInterval);
-        animationDiv.innerHTML = `<p>${result.join(' | ')}</p>`;
+        rotation = Math.floor(rotation) % 360;
+        chosenIndex = Math.floor((rotation / 360) * wheelNumbers.length) % wheelNumbers.length;
+        animationDiv.querySelector('.wheel').style.transform = `rotate(${chosenIndex * -360 / wheelNumbers.length}deg)`;
       }, 3000);
 
-      return result[0] === result[1] && result[1] === result[2] ? bet * 5 : -bet;
+      return wheelNumbers[chosenIndex] * bet;
     }
 
     function playRoulette(bet, animationDiv) {
       const colors = ['red', 'black'];
-      let currentColor = '';
+      let finalColor = '';
 
       animationInterval = setInterval(() => {
-        currentColor = colors[Math.floor(Math.random() * colors.length)];
-        animationDiv.innerHTML = `<p style="color: ${currentColor};">${currentColor.toUpperCase()}</p>`;
+        finalColor = colors[Math.floor(Math.random() * colors.length)];
+        animationDiv.innerHTML = `<p style="color: ${finalColor}; font-size: 24px;">Spinning... ${finalColor.toUpperCase()}</p>`;
       }, 100);
 
       setTimeout(() => {
         clearInterval(animationInterval);
-        animationDiv.innerHTML = `<p style="color: ${currentColor};">${currentColor.toUpperCase()}</p>`;
+        animationDiv.innerHTML = `<p style="color: ${finalColor}; font-size: 24px;">Result: ${finalColor.toUpperCase()}</p>`;
       }, 3000);
 
-      return currentColor === betChoice ? bet * 2 : -bet;
+      return finalColor === betChoice ? bet * 2 : -bet;
     }
 
     function playDice(bet, animationDiv) {
