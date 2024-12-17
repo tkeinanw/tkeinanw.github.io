@@ -60,11 +60,12 @@
         <button onclick="loadGame('game3')">Blackjack Game</button>
     </div>
 
-    <iframe id="game-frame" onload="injectWallet()"></iframe>
+    <iframe id="game-frame"></iframe>
     <button id="back-button" onclick="goHome()">Back to Home</button>
 
     <script>
-        let wallet = 50000; // Shared wallet balance
+        const walletKey = 'sharedWallet';
+        let wallet = localStorage.getItem(walletKey) ? parseInt(localStorage.getItem(walletKey)) : 50000; // Default wallet
 
         function loadGame(game) {
             const frame = document.getElementById('game-frame');
@@ -84,19 +85,20 @@
             backButton.style.display = 'block';
         }
 
-        function injectWallet() {
-            const frame = document.getElementById('game-frame');
-            if (frame.contentWindow) {
-                frame.contentWindow.wallet = wallet; // Inject wallet into iframe
+        window.addEventListener('message', function(event) {
+            // Receive wallet updates from the iframe
+            if (event.data.wallet !== undefined) {
+                wallet = event.data.wallet;
+                localStorage.setItem(walletKey, wallet); // Save wallet to localStorage
             }
-        }
+        });
 
         function goHome() {
             const frame = document.getElementById('game-frame');
             const menu = document.getElementById('game-menu');
             const backButton = document.getElementById('back-button');
             
-            wallet = frame.contentWindow.wallet || wallet; // Update shared wallet
+            frame.contentWindow.postMessage({ wallet }, '*'); // Send wallet to iframe
             frame.src = '';
             frame.style.display = 'none';
             menu.style.display = 'flex';
